@@ -49,12 +49,12 @@ import scipy
 #x(t+1)=A*x(t)+B*u
 #x(t+1)=k*x(t)
 
-M = .5;
-m = 0.2;
-b = 0.1;
-I = 0.006;
+M = 2;
+m = 5;
+b = 0.5;
+I = 0.10500391309238813;
 g = 9.8;
-l = 0.3;
+l = 0.1;
 
 px = I*(M+m)+pow(M*m*l,2) #denominator for the A and B matrices
 
@@ -79,8 +79,8 @@ B = np.array([[  0.  ],
 # In[3]:
 
 
-Q = np.array([[ 100,   0],[  0, 1000]])
-R = 0.0001
+# Q = np.array([[ 100,   0],[  0, 1000]])
+# R = 0.0001
 # K,S,e = lqr(A,B,Q,R)
 # print(K)
 # print(S)
@@ -97,13 +97,13 @@ class SelfBalanceLQR:
         self.yMin = -0.01#yaw
         self.yMax = 0
         self.y_ = 0
-        self.Q = np.array([[ 100,   0],[  0, 1000]])
+        self.Q = np.array([[ 10,   0],[  0, 1000]])
         self.R = 0.0001
         self.K,self.S,self.e = control.lqr(A,B,self.Q,self.R)
     def callback(self,data):
         
         vel = data[0][0]
-        y = data[1][1]*180/3.1416#theata changes along 1
+        y = data[1][1]#theata changes along 1
         
         diff_yaw = y-self.y_
         np_x = np.array([[y],[diff_yaw]])
@@ -129,7 +129,7 @@ class SelfBalanceLQR:
         #print("Velocity "+ str(xvel)+ " & yaw " + str(y))
         self.y_ = y
         
-        return xvel
+        return xvel-np_x[1]
         
     def callback_q(self,data):
         q = data.data
@@ -153,7 +153,7 @@ balance.callback([(0.0, 0.0, 0.0), [ 0., -0.,  0.]])
 
 # [Youtube Link](https://youtu.be/QmrRNw043dY)
 
-# In[6]:
+# In[ ]:
 
 
 id = p.connect(p.GUI)
@@ -179,14 +179,15 @@ print("-------------------------------------------------------------------------
 # print("Base position and Orientation : " , p.getBasePositionAndOrientation(robot),end="\n")
 # #1->orientation
 
-# com = p.getDynamicsInfo(robot, -1)[3][2]
+# com = p.getDynamicsInfo(robot, -1)
 # com += p.getBasePositionAndOrientation(robot)[0][2] 
 # print("Centre of mass - ", com)
 
 #information required yaw
 #imu sensor , kp ,ki ,kd
 #set cmd_vel 
-
+p.changeDynamics(robot,left_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
+p.changeDynamics(robot,right_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
 balance=SelfBalanceLQR()
 while(True):
     position,orientation=p.getBasePositionAndOrientation(robot)
@@ -198,11 +199,11 @@ while(True):
     velocity,angular=p.getBaseVelocity(robot)
     #print([velocity,euler_angles])
     vel=balance.callback([velocity,euler_angles])
-    print(vel)
-    p.setJointMotorControl2(robot, left_joint , p.VELOCITY_CONTROL, targetVelocity = vel)
-    p.setJointMotorControl2(robot, right_joint , p.VELOCITY_CONTROL, targetVelocity = -vel)
+    print(vel,theta)
+    p.setJointMotorControl2(robot, left_joint , p.VELOCITY_CONTROL, targetVelocity = -vel)
+    p.setJointMotorControl2(robot, right_joint , p.VELOCITY_CONTROL, targetVelocity = vel)
     p.stepSimulation()
-    time.sleep(0.1)
+    time.sleep(0.01)
 
 
 # ## Conclusion
@@ -227,6 +228,12 @@ while(True):
 # [4] Control System Tutorials , [link](http://ctms.engin.umich.edu/CTMS/index.php?example=InvertedPendulum&section=SystemModeling)
 # https://automaticaddison.com/linear-quadratic-regulator-lqr-with-python-code-example/
 # 
+
+# In[ ]:
+
+
+
+
 
 # In[ ]:
 

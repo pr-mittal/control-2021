@@ -26,7 +26,7 @@
     <link name="Untitled.001">
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="0.001"/>
+        <mass value="1"/>
         <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
       </inertial>
       <visual name="WHeelZ.001">
@@ -47,7 +47,7 @@
     <link name="Untitled.002">
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <mass value="0.001"/>
+        <mass value="1"/>
         <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
       </inertial>
       <visual name="WHeelZ">
