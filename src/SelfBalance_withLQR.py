@@ -21,7 +21,7 @@ import pybullet as p
 import math
 import time
 import pybullet_data
-import control 
+import controlpy 
 import scipy
 
 
@@ -98,8 +98,8 @@ class SelfBalanceLQR:
         self.yMax = 0
         self.y_ = 0
         self.Q = np.array([[ 10,   0],[  0, 1000]])
-        self.R = 0.0001
-        self.K,self.S,self.e = control.lqr(A,B,self.Q,self.R)
+        self.R = [[0.0001]]
+        self.K,self.S,self.e = controlpy.synthesis.controller_lqr(A,B,self.Q,self.R)
     def callback(self,data):
         
         vel = data[0][0]
@@ -134,12 +134,12 @@ class SelfBalanceLQR:
     def callback_q(self,data):
         q = data.data
         self.Q = np.array([[ q,   0],[  0, 10*q]])
-        self.K,self.S,self.e = control.lqr(A,B,self.Q,self.R)
+        self.K,self.S,self.e = controlpy.synthesis.controller_lqr(A,B,self.Q,self.R)
         
     def callback_r(self,data):
         r = data.data
         self.R = r
-        self.K,self.S,self.e = control.lqr(A,B,self.Q,self.R)
+        self.K,self.S,self.e = controlpy.synthesis.controller_lqr(A,B,self.Q,self.R)
 
 
 # In[5]:
