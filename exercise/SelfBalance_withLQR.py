@@ -62,22 +62,22 @@ l = 0.1;
 # J = int (x^T Q x +u^T R u)dt
 # Here, we need to tune Q matrix and R such that the value of "J" is minimum. The lqp function automatically does that for you
 
-'''
-Purpose:
----
-Class Describing the gains of LQR and various functions
-Functions:
----
-    __init__ : Called by default to initilize the variables in LQR
-    callback : It takes the data from sensors/bots and accordingly predicts the next state and respecive action
-    callback_q : It can be used to change the value of gains during execution
-    callback_r : It can be used to change the value of gains during execution
-Example initialization and function call:
----
-balance=SelfBalanceLQR()
-vel=balance.callback(data)
-'''
 class SelfBalanceLQR:
+    '''
+    Purpose:
+    ---
+    Class Describing the gains of LQR and various functions
+    Functions:
+    ---
+        __init__ : Called by default to initilize the variables in LQR
+        callback : It takes the data from sensors/bots and accordingly predicts the next state and respecive action
+        callback_q : It can be used to change the value of gains during execution
+        callback_r : It can be used to change the value of gains during execution
+    Example initialization and function call:
+    ---
+    balance=SelfBalanceLQR()
+    vel=balance.callback(data)
+    '''
     def __init__(self):
         self.xvelMin=-.01# x velocity
         self.xvelMax =0
@@ -129,12 +129,51 @@ class SelfBalanceLQR:
         self.R = r
         self.K,self.S,self.e = controlpy.synthesis.controller_lqr(A,B,self.Q,self.R)
 
-'''
-Purpose:
----
-    Setup the pybullet environment and calculation of state variables and respective action to balance the bot
-'''
+def synthesizeData(p,robot):
+    '''
+    Purpose:
+    ---
+    Calculate the current state(position , velocity , orienation etc.)
+    Input Arguments:
+    ---
+    `robot` :  integer
+        object id of bot spawned in pybullet
+
+    Returns:
+    ---
+    `data` :  1D array 
+        list of information required for calculation
+    Example call:
+    ---
+    data=synthesizeData(robot)
+    '''
+    # print("----------------------------------------------------------------------------------------------------------------")
+    # print("Dynamic Info of Base : ",p.getDynamicsInfo(robot, -1),end="\n")
+    # #0->mass , 3->local inertial pos
+    # print("Base position and Orientation : " , p.getBasePositionAndOrientation(robot),end="\n")
+    # #1->orientation
+
+    # com = p.getDynamicsInfo(robot, -1)
+    # com += p.getBasePositionAndOrientation(robot)[0][2] 
+    # print("Centre of mass - ", com)
+
+    #information required yaw
+    #imu sensor , kp ,ki ,kd
+    #set cmd_vel 
+    ################################################## write our code here ######################################################
+    #Varible : data ,1D array that contains all the state variable required to implement LQR
+    # For hints refer to statements above and choose an apt state variable
+    #write here
+    #############################################################################################################################
+    return data
+
+
 if __name__ == "__main__":
+    '''
+    Purpose:
+    ---
+        Setup the pybullet environment and calculation of state variables and respective action to balance the bot
+    '''
     # connecting to pybullet
     id = p.connect(p.GUI)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -151,38 +190,22 @@ if __name__ == "__main__":
     #     if link_name == "right_wheel": wheel_foot = j
     left_joint=0
     right_joint=1
+    maxForce = 0
+    mode = p.VELOCITY_CONTROL
+    p.setJointMotorControl2(robot, left_joint,controlMode=mode, force=maxForce)
+    p.setJointMotorControl2(robot, right_joint,controlMode=mode, force=maxForce)
 
-    p.changeDynamics(robot,left_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
-    p.changeDynamics(robot,right_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
+
+    # p.changeDynamics(robot,left_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
+    # p.changeDynamics(robot,right_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
     balance=SelfBalanceLQR()
     
-    ################################################# write your code here #############################################
-    
-    print("----------------------------------------------------------------------------------------------------------------")
-    #few state variable to test and get the current state of the bot
-
-    # print("Dynamic Info of Base : ",p.getDynamicsInfo(robot, -1),end="\n")
-    # #0->mass , 3->local inertial pos
-    # print("Base position and Orientation : " , p.getBasePositionAndOrientation(robot),end="\n")
-    # #1->orientation
-
-    # com = p.getDynamicsInfo(robot, -1)
-    # com += p.getBasePositionAndOrientation(robot)[0][2] 
-    # print("Centre of mass - ", com)
-
-    #information required yaw
-    #imu sensor , kp ,ki ,kd
-    #set cmd_vel 
     
     while(True):
-        ################################################## write our code here ######################################################
-        #Varible : data ,1D array that contains all the state variable required to implement LQR
-        # For hints refer to statements above and choose an apt state variable
-        #write here
-        #############################################################################################################################
-        vel=balance.callback(data)#call to function 
-        p.setJointMotorControl2(robot, left_joint , p.VELOCITY_CONTROL, targetVelocity = -vel)
-        p.setJointMotorControl2(robot, right_joint , p.VELOCITY_CONTROL, targetVelocity = vel)
+        data=synthesizeData(robot)#get data from simulation and bot
+        vel=balance.callback(data)#call to function to implement algorithm
+        p.setJointMotorControl2(robot, left_joint , p.TORQUE_CONTROL, force = -vel)
+        p.setJointMotorControl2(robot, right_joint , p.TORQUE_CONTROL, force = vel)
         p.stepSimulation()
         time.sleep(0.01)
 

@@ -111,10 +111,30 @@ class SelfBalanceLQR:
         self.R = r
         self.K,self.S,self.e = controlpy.synthesis.controller_lqr(A,B,self.Q,self.R)
 
+def synthesizeData(p,robot):
+    print("----------------------------------------------------------------------------------------------------------------")
+    # print("Dynamic Info of Base : ",p.getDynamicsInfo(robot, -1),end="\n")
+    # #0->mass , 3->local inertial pos
+    # print("Base position and Orientation : " , p.getBasePositionAndOrientation(robot),end="\n")
+    # #1->orientation
 
-balance=SelfBalanceLQR()
-balance.callback([(0.0, 0.0, 0.0), [ 0., -0.,  0.]])
+    # com = p.getDynamicsInfo(robot, -1)
+    # com += p.getBasePositionAndOrientation(robot)[0][2] 
+    # print("Centre of mass - ", com)
 
+    #information required yaw
+    #imu sensor , kp ,ki ,kd
+    #set cmd_vel 
+    position,orientation=p.getBasePositionAndOrientation(robot)
+    euler_angles=np.array(p.getEulerFromQuaternion(orientation))#1->orientation
+    deg_orien=euler_angles*180/np.pi
+    #print(deg_orien)
+    theta=deg_orien[1]
+    #pos=position[0]
+    velocity,angular=p.getBaseVelocity(robot)
+    #print([velocity,euler_angles])
+    data=[velocity,euler_angles]
+    return data
 
 id = p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -132,36 +152,23 @@ robot = p.loadURDF("../urdf/self_balance.urdf" , [0,0,0.2])
 #     if link_name == "right_wheel": wheel_foot = j
 left_joint=0
 right_joint=1
+maxForce = 0
+mode = p.VELOCITY_CONTROL
+p.setJointMotorControl2(robot, left_joint,controlMode=mode, force=maxForce)
+p.setJointMotorControl2(robot, right_joint,controlMode=mode, force=maxForce)
 
-print("----------------------------------------------------------------------------------------------------------------")
-# print("Dynamic Info of Base : ",p.getDynamicsInfo(robot, -1),end="\n")
-# #0->mass , 3->local inertial pos
-# print("Base position and Orientation : " , p.getBasePositionAndOrientation(robot),end="\n")
-# #1->orientation
 
-# com = p.getDynamicsInfo(robot, -1)
-# com += p.getBasePositionAndOrientation(robot)[0][2] 
-# print("Centre of mass - ", com)
 
-#information required yaw
-#imu sensor , kp ,ki ,kd
-#set cmd_vel 
-p.changeDynamics(robot,left_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
-p.changeDynamics(robot,right_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
+# p.changeDynamics(robot,left_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
+# p.changeDynamics(robot,right_joint,lateralFriction=0.7,spinningFriction=0.5,rollingFriction=0.5)
+
 balance=SelfBalanceLQR()
 while(True):
-    position,orientation=p.getBasePositionAndOrientation(robot)
-    euler_angles=np.array(p.getEulerFromQuaternion(orientation))#1->orientation
-    deg_orien=euler_angles*180/np.pi
-    #print(deg_orien)
-    theta=deg_orien[1]
-    #pos=position[0]
-    velocity,angular=p.getBaseVelocity(robot)
-    #print([velocity,euler_angles])
-    vel=balance.callback([velocity,euler_angles])
-    print(vel,theta)
-    p.setJointMotorControl2(robot, left_joint , p.VELOCITY_CONTROL, targetVelocity = -vel)
-    p.setJointMotorControl2(robot, right_joint , p.VELOCITY_CONTROL, targetVelocity = vel)
+    data=synthesizeData(p,robot)
+    vel=balance.callback(data)
+    print(vel,data[1])
+    p.setJointMotorControl2(robot, left_joint , p.TORQUE_CONTROL, force = -vel)
+    p.setJointMotorControl2(robot, right_joint , p.TORQUE_CONTROL, force = vel)
     p.stepSimulation()
     time.sleep(0.01)
 

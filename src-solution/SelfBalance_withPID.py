@@ -70,10 +70,30 @@ class SelfBalance:
         
 
 
-balance=SelfBalance()
-balance.callback([(0.0, 0.0, 0.0), [ 0., -0.,  0.]])
+def synthesizeData(p,robot):
+    # print("----------------------------------------------------------------------------------------------------------------")
+    # # print("Dynamic Info of Base : ",p.getDynamicsInfo(robot, -1),end="\n")
+    # # #0->mass , 3->local inertial pos
+    # print("Base position and Orientation : " , p.getBasePositionAndOrientation(robot),end="\n")
+    # # #1->orientation
 
+    # com = p.getDynamicsInfo(robot, -1)[3][2]
+    # com += p.getBasePositionAndOrientation(robot)[0][2] 
+    # print("Centre of mass - ", com)
 
+    #information required yaw
+    #imu sensor , kp ,ki ,kd
+    position,orientation=p.getBasePositionAndOrientation(robot)
+    euler_angles=np.array(p.getEulerFromQuaternion(orientation))#1->orientation
+    deg_orien=euler_angles*180/np.pi
+    #print(deg_orien)
+    theta=deg_orien[1]
+    #pos=position[0]
+    velocity,angular=p.getBaseVelocity(robot)
+    #print([velocity,euler_angles])
+    data=[velocity,euler_angles]
+    # print(vel)
+    return data
 # Main Function
 
 id = p.connect(p.GUI)
@@ -93,34 +113,19 @@ robot = p.loadURDF("../urdf/self_balance.urdf" , [0,0,0.2])
 
 left_joint=0
 right_joint=1
+maxForce = 0
+mode = p.VELOCITY_CONTROL
+p.setJointMotorControl2(robot, left_joint,controlMode=mode, force=maxForce)
+p.setJointMotorControl2(robot, right_joint,controlMode=mode, force=maxForce)
 
-# print("----------------------------------------------------------------------------------------------------------------")
-# # print("Dynamic Info of Base : ",p.getDynamicsInfo(robot, -1),end="\n")
-# # #0->mass , 3->local inertial pos
-# print("Base position and Orientation : " , p.getBasePositionAndOrientation(robot),end="\n")
-# # #1->orientation
 
-# com = p.getDynamicsInfo(robot, -1)[3][2]
-# com += p.getBasePositionAndOrientation(robot)[0][2] 
-# print("Centre of mass - ", com)
-
-#information required yaw
-#imu sensor , kp ,ki ,kd
 
 balance=SelfBalance()
 while(True):
-    position,orientation=p.getBasePositionAndOrientation(robot)
-    euler_angles=np.array(p.getEulerFromQuaternion(orientation))#1->orientation
-    deg_orien=euler_angles*180/np.pi
-    #print(deg_orien)
-    theta=deg_orien[1]
-    #pos=position[0]
-    velocity,angular=p.getBaseVelocity(robot)
-    #print([velocity,euler_angles])
-    vel=balance.callback([velocity,euler_angles])
-    # print(vel)
-    p.setJointMotorControl2(robot, left_joint , p.VELOCITY_CONTROL, targetVelocity = vel)
-    p.setJointMotorControl2(robot, right_joint , p.VELOCITY_CONTROL, targetVelocity = -vel)
+    data=synthesizeData(p,robot)
+    vel=balance.callback(data)
+    p.setJointMotorControl2(robot, left_joint , p.TORQUE_CONTROL, force = vel*0.1)
+    p.setJointMotorControl2(robot, right_joint , p.TORQUE_CONTROL, force = -vel*0.1)
     p.stepSimulation()
     time.sleep(0.01)
 
