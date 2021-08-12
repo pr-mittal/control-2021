@@ -22,34 +22,23 @@ So the best controller depends on the problem and which one might perform well i
 
 Also the maths is easy .
 
-## Weekly Challenge 2
+# Solution
 
-# Goals for Weekly Challenge 2
+Check out the solutions folder .
 
-1. Implement a LQR based controller to balancing the self balancing bot  using Torque Control.
-2. Develop a LQR controller to make the bot stay upright.
-3. Calibrate the Gains to get the best performance and minimum turbulence.
-4. Infer from the exercise how different error coefficients affect the performance and stability.
+Self_Balance_withLQR.py : Simple standing bot on 2 wheels 
 
-# 
+Self_Balance_withLQR2.py : Bot on 2 wheels with extra feature of up/down/right/left movement  
 
-# INSTRUCTIONS 
+Self_Balance_withPID.py : Standing bot using PID 
 
-1. Download this folder.
-2. The code in folder "exercise" has to  be edited.
-3. You have two controller options although submission for only LQR will be taken.
-4. You are free to make any changes you like based on your algo.
-5. "test_lqr.py" and "test_urdf" are just for you to get familiar with the function used and the environment . 
+solution.webm : Video  of Self_Balance_withLQR2.py 
 
-# You did it
+File Structure :
 
-![image](https://user-images.githubusercontent.com/56964828/126336991-0385ea7d-fead-46e6-9b04-da756da30c24.png)
+1. exercise : This folder contains the incomplete code for LQR and PID
+2. experiment : Some example codes to get familiar with pybullet environment
+3. solution : Solution code for LQR and PID 
+4. urdf : 2-wheel bot urdf
 
-Once you have completed the challenge, we want you to submit the updated "SelfBalance_withLQR.py" file on the link given below.
-
-[Weekly Challenge 2 - Submission](https://docs.google.com/forms/d/e/1FAIpQLSc0jwEoPoOjBOpDa16rTE8ZwNaHI4cGr4ITpnLxSISYBk6wEw/viewform?usp=sf_link)
-
-
-
-
-
+Implementation of LQR , PID for self balancing bot. 
